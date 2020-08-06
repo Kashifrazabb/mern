@@ -1,8 +1,12 @@
 import express from 'express';
-import './models/user.js';
 import mongoose from 'mongoose';
-import router from './routes/auth.js';
+import './models/auth.js';
+import './models/post.js';
+import authRouter from './routes/auth.js';
+import postRouter from './routes/post.js';
 import dotenv from 'dotenv';
+
+const app=express()
 
 dotenv.config()
 
@@ -10,10 +14,9 @@ mongoose.connect(process.env.MONGOURI,{useNewUrlParser:true,useUnifiedTopology:t
 mongoose.connection.on('connected',()=>console.log('Connected to MongoDB!'))
 mongoose.connection.on('error',err=>console.log('Error While Connecting to MongoDB',err))
 
-const app=express()
-
 app.use(express.json())
-app.use(router)
+app.use(authRouter)
+app.use(postRouter)
 
 const {PORT}=process.env
 

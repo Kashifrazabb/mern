@@ -2,17 +2,17 @@ import mongoose from 'mongoose';
 import bcryptjs from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const User = mongoose.model('User');
+const Auth = mongoose.model('auth');
 
 export const signup = (req, res) => {
     const { name, email, password } = req.body;
     if (!name || !email || !password) return res.status(422).json({ message: 'Please input all fields', status: 'Unprocessable Entity' })
-    User.findOne({ email })
+    Auth.findOne({ email })
         .then(selectedUser => {
             if (selectedUser) return res.status(422).json({ message: 'User already exists with the same email', status: 'Unprocessable Entity' })
             bcryptjs.hash(password, 10)
                 .then(bcryptedPassword => {
-                    User.create({ name, email, password: bcryptedPassword })
+                    Auth.create({ name, email, password: bcryptedPassword })
                         .then(() => res.send(`Hi ${name}, you have been successfully registered`))
                         .catch(err => res.send(`Error while saving : ${err}`))
                 })
@@ -24,7 +24,7 @@ export const signup = (req, res) => {
 export const signin = (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(422).json({ message: 'Please input all fields', status: 'Unprocessable Entity' })
-    User.findOne({ email })
+    Auth.findOne({ email })
         .then(selectedUser => {
             if (!selectedUser) return res.status(422).json({ message: 'Invalid username or password', status: 'Unprocessable Entity' })
             bcryptjs.compare(password, selectedUser.password)
@@ -45,10 +45,10 @@ export const requireLogin = (req, res, next) => {
     jwt.verify(token, process.env.JWTSECRET, (err, payload) => {
         if (err) return res.status(401).json({ message: 'You must be logged in', status: 'Unauthorized' })
         const { _id } = payload;
-        User.findById(_id)
+        Auth.findById(_id)
             .then(selectedUser => {
-                req.user = selectedUser;
+                req.userData = selectedUser;
+                next()
             })
-        next()
     })
 }
